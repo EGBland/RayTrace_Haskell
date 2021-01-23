@@ -1,3 +1,4 @@
+import Data.Maybe (isNothing, fromJust)
 import System.IO (hPutStrLn, stderr)
 import Text.Printf (printf)
 import Vector3
@@ -12,14 +13,18 @@ type Ray = (Point,Direction)
 type Sphere = (Point,Radius)
 
 rayAt :: Ray -> Double -> Point
-rayAt (a,b) t = a £+ (t £* vecunit b)
+(a,b) `rayAt` t = a £+ (t £* vecunit b)
 
-hitsSphere :: Ray -> Sphere -> Bool
-(p,d) `hitsSphere` (o,r) = let centre = p £- o
-                               a      = d £. d
-                               b      = 2 * (centre £. d)
-                               c      = (centre £. centre) - (r*r)
-                               in b*b-4*a*c >= 0
+hitsSphere :: Ray -> Sphere -> Maybe Point
+(p,d) `hitsSphere` (o,r)
+    | disc >= 0 = Just ((p,d) `rayAt` ((-b - sqrt disc) / (2*a)))
+    | otherwise = Nothing
+    where centre = p £- o
+          a      = d £. d
+          b      = 2 * (centre £. d)
+          c      = (centre £. centre) - (r*r)
+          disc   = b*b - 4*a*c
+                               
 
 putErrLn :: String -> IO ()
 putErrLn = hPutStrLn stderr
@@ -35,8 +40,11 @@ vecToColour = vecmap $ floor . (*255)
 
 rayColour :: Ray -> Colour
 rayColour r
-    | r `hitsSphere` ((0,0,-1),0.5) = (255,0,0)
-    | otherwise = rayBackground r
+    | isNothing pt = rayBackground r
+    | otherwise = let ptj  = fromJust pt
+                      ptju = vecunit (ptj £- (0,0,-1))
+                      in vecToColour (vecmap ((*0.5) . (+1)) ptju) 
+    where pt = r `hitsSphere` ((0,0,-1),0.5)
 
 rayBackground :: Ray -> Colour
 rayBackground (a,b) = let bu = vecunit b
