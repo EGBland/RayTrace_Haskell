@@ -21,12 +21,15 @@ vecmap f (x,y,z) = (f x,f y,f z)
 vecop :: (a -> b -> c) -> Vec3 a -> Vec3 b -> Vec3 c
 vecop f (x1,y1,z1) (x2,y2,z2) = (f x1 x2,f y1 y2,f z1 z2)
 
+infixl 6 £+
 (£+) :: (Num a) => Vec3 a -> Vec3 a -> Vec3 a
 (£+) = vecop (+)
 
+infixl 6 £-
 (£-) :: (Num a) => Vec3 a -> Vec3 a -> Vec3 a
 (£-) = vecop (-)
 
+infixl 7 £*
 (£*) :: (Num a) => a -> Vec3 a -> Vec3 a
 (£*) t = vecmap (*t)
 
