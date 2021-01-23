@@ -24,12 +24,12 @@ vecToColour :: Point -> Colour
 vecToColour = vecmap $ floor . (*255)
 
 rayColour :: Ray -> Colour
-rayColour (a,b) = let bu   = vecunit b
-                      blue = 0.5 * (vy bu + 1)
-                      in vecToColour (1,1,blue)
+rayColour (a,b) = let bu = vecunit b
+                      t  = 0.5 * (vy bu + 1)
+                      in vecToColour (((1-t) £* (1.0,1.0,1.0)) £+ (t £* (0.5,0.7,1.0)))
 
-imageWidth = 256 :: Int
-imageHeight = 256 :: Int
+imageWidth = 400 :: Int
+imageHeight = 225 :: Int
 aspectRatio = fromIntegral imageWidth / fromIntegral imageHeight :: Double
 
 viewportHeight = 2.0 :: Double
@@ -45,13 +45,14 @@ main = do
     let image = reverse
             [
                 [
-                    (fromIntegral x / fromIntegral (imageWidth-1), fromIntegral y / fromIntegral (imageHeight-1), 0.25)
+                    let u = fromIntegral x / fromIntegral (imageWidth-1)
+                        v = fromIntegral y / fromIntegral (imageHeight-1)
+                        in rayColour (eye, lowerLeftCorner £+ (u £* horizontal) £+ (v £* vertical) £+ eye)
                     | x <- [0..imageWidth-1]
                 ]
                 | y <- [0..imageHeight-1]
             ]
-    let colours = map (map vecToColour) image
-    let lines = zip (map drawLine colours) (reverse [0..imageHeight-1])
+    let lines = zip (map drawLine image) (reverse [0..imageHeight-1])
     let monads = map (\(x,y) -> putStrLn x >> putErrLn (show y)) lines
     putStrLn $ printf "P3\n%d\t%d\t255\n" imageWidth imageHeight
     sequence_ monads
