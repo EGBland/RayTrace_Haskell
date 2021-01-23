@@ -2,14 +2,24 @@ import System.IO (hPutStrLn, stderr)
 import Text.Printf (printf)
 import Vector3
 
+type Radius = Double
+
 type Point = Vec3 Double
 type Direction = Vec3 Double
 type Colour = Vec3 Int
 
 type Ray = (Point,Direction)
+type Sphere = (Point,Radius)
 
 rayAt :: Ray -> Double -> Point
 rayAt (a,b) t = a £+ (t £* vecunit b)
+
+hitsSphere :: Ray -> Sphere -> Bool
+(p,d) `hitsSphere` (o,r) = let centre = p £- o
+                               a      = d £. d
+                               b      = 2 * (centre £. d)
+                               c      = (centre £. centre) - (r*r)
+                               in b*b-4*a*c >= 0
 
 putErrLn :: String -> IO ()
 putErrLn = hPutStrLn stderr
@@ -24,9 +34,14 @@ vecToColour :: Point -> Colour
 vecToColour = vecmap $ floor . (*255)
 
 rayColour :: Ray -> Colour
-rayColour (a,b) = let bu = vecunit b
-                      t  = 0.5 * (vy bu + 1)
-                      in vecToColour (((1-t) £* (1.0,1.0,1.0)) £+ (t £* (0.5,0.7,1.0)))
+rayColour r
+    | r `hitsSphere` ((0,0,-1),0.5) = (255,0,0)
+    | otherwise = rayBackground r
+
+rayBackground :: Ray -> Colour
+rayBackground (a,b) = let bu = vecunit b
+                          t  = 0.5 * (vy bu + 1)
+                          in vecToColour (((1-t) £* (1.0,1.0,1.0)) £+ (t £* (0.5,0.7,1.0)))
 
 imageWidth = 400 :: Int
 imageHeight = 225 :: Int
